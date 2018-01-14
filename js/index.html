@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<!-- This tells the browser what to display in the title of the browser window -->
+<title>Rock, Paper, Scissors in Javascript</title>
+
+<!-- This is CSS, which stands for "Cascading Style Sheets" and tells the browser how everything is supposed to look -->
+<style>
+/* This tells the browser that every HTML element inside the "body" element should use Helvetica as its font. */
+body {
+  font-family: helvetica;
+}
+
+/* The period means its a class name */
+.rps-container {
+  /*  We don't want the container to be wider than 400 pixels */
+  max-width: 400px;
+  /* margin:auto centers an element that has a width defined. */
+  margin: auto;
+}
+
+.rps-buttons {
+  /*  This is a shortcut that lets us center the buttons. There are lots of ways to do this. */
+  text-align: center;
+  border: 1px solid #ccc;
+  /*  This makes the corners of the border of the element rounded. */
+  border-radius: 10px;
+  /*  This adds 10 pixels of space inside the element */
+  padding: 10px;
+}
+
+/*  This will apply to ANY button element that is inside an element with a class name of rps-buttons */
+.rps-buttons button {
+  border: none;
+  outline: none;
+  /*  This is what turns the cursor into the pointer when you hover over the button. */
+  cursor: pointer;
+  background-color: transparent;
+  /* Bakcground images will tile unless we tell the browser not to do that.  */
+  background-repeat: no-repeat;
+  /*  This tells the browser to size the background image so that it takes up all the available space without distorting it. */
+  background-size: contain;
+  /* This tells the browser to animate this property whenever its values changes. */
+  transition: transform 0.25s;
+  width: 100px;
+  height: 100px;
+}
+
+.rps-buttons.cpu {
+  /* This puts 40 pixels of space at the top of the second button container */
+  margin-top: 40px;
+}
+
+/* This sets up the background images for each button, and sets the transform origin, which tells the browser how to calculate our scale animation. */
+.rps-buttons button[data-id="0"] {
+  background-image:url('images/rock.png');
+  transform-origin: center right;
+}
+
+.rps-buttons button[data-id="1"] {
+  background-image:url('images/paper.png');
+  transform-origin: center;
+}
+
+.rps-buttons button[data-id="2"] {
+  background-image:url('images/scissors.png');
+  transform-origin: center left;
+}
+
+/* This class is applied to buttons that have been chosen by the player and the CPU. It makes them 75% bigger. */
+.rps-buttons button.active {
+  transform: scale(1.75);
+}
+
+/* We don't want the user to click the CPU's buttons, so we tell it to ignore pointer events like clicks */
+.rps-buttons.cpu {
+  pointer-events: none;
+}
+
+.rps-results {
+  margin-top: 40px;
+  text-align: center;
+}
+</style>
+<script>
+// This is the RPS class, its pretty similar to what we did with the RPS class in Python.
+class RPS {
+  // contructor is the same as __init__ in Python.
+  constructor() {
+    // Here we query the document for all button elements that are inside an element with both the rps-buttons AND player class
+    const buttons = document.querySelectorAll('.rps-buttons.player button');
+    // This just grabs a single reference to the first element it finds with the rps-results class.
+    this.results = document.querySelector('.rps-results');
+
+    // This one is similar to how Python needs "self" passed to its class methods. This "bind" makes us able to reference "this" is the event handlers.
+    // In javascript, "this" is the same as "self" in Python.
+    this.onButtonClicked = this.onButtonClicked.bind(this);
+    // We'll itterate over the buttons, and use addEventListener to attach a click event handler to each button.
+    buttons.forEach(button => {
+      button.addEventListener('click', this.onButtonClicked);
+    })
+  }
+
+  // This handles button clicks
+  onButtonClicked(event) {
+      // This picks up the data-id value of the button. The "event" argument has a "target" property that is the element that the event came from.
+      // parseInt is the same as Python's int() method.
+      const playerChoice = parseInt(event.target.getAttribute('data-id'), 10);
+      this.reset();
+      // This adds the "active" class to the button the player clicked. The "active" class scales the button to 1.75
+      event.target.classList.add('active');
+      // This passes the choice the player made to the play function.
+      this.play(playerChoice);
+  }
+
+  play(playerChoice) {
+    // This should look pretty familiar!
+    const weapons = ["Rock", "Paper", "Scissors"];
+    const beats = [2, 0, 1];
+
+    // We pick a random number based on the length of the weapons array.
+    // We floor the result, because we want 0, 1 or 2 and not 1.12341231239
+    const cpuChoice = Math.floor(Math.random() * weapons.length);
+    // This grabgs a reference to the button that represents the choice the CPU made.
+    const cpuButton = document.querySelector(`.rps-buttons.cpu button[data-id="${cpuChoice}"]`);
+    cpuButton.classList.add('active');
+
+    // This is a tempalte literal, and is similar to print(f"Hello, {playerName}) in Python.
+    let html = `You played ${weapons[playerChoice]} and I played ${weapons[cpuChoice]} <br />`;
+
+
+    // This checks to see who won. Its the same as what we did in Python.
+    if(beats[playerChoice] === cpuChoice) {
+      html = `${html}You win!`;
+    } else if (beats[cpuChoice] === playerChoice) {
+      html = `${html}I win!`;
+    } else {
+      html = `${html}We tied!!`;
+    }
+
+    //  This waits 1.5 seconds, and resets everything.
+    setTimeout(this.reset, 1500);
+    // This sets the HTML of the "results" element with the HTML string we built.
+    this.results.innerHTML = html;
+  }
+
+  // This class just removes the "active" class from all of the buttons.
+  reset() {
+    const buttons = document.querySelectorAll('.rps-buttons button');
+    buttons.forEach(button => {
+      button.classList.remove('active');
+    })
+  }
+}
+
+// When the browser has fully parsed the document, it fires a DOMContentLoaded event. We'll fire off our game when we know the browser is ready to go. 
+window.addEventListener('DOMContentLoaded', () => {
+  const game = new RPS();
+});
+</script>
+</head>
+<body>
+<section class="rps-container">
+  <h1>
+    Let's play Rock, Paper, Scissors!
+  </h1>
+  <h2>Choose your weapon ...</h2>
+  <div class="rps-buttons player">
+    <button data-id="0" title="Rock"></button>
+    <button data-id="1" title="Paper"></button>
+    <button data-id="2" title="Scissors"></button>
+  </div>
+  <div class="rps-buttons cpu">
+    <button data-id="0" title="Rock"></button>
+    <button data-id="1" title="Paper"></button>
+    <button data-id="2" title="Scissors"></button>
+  </div>
+  <div class="rps-results"></div>
+
+</section>
+
+</body>
+</html>
